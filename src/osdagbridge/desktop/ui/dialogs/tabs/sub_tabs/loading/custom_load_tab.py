@@ -63,8 +63,8 @@ class CustomLoadTab(QWidget):
         label_style = "font-size: 11px; color: #2a2a2a; background: transparent; border: none;"
         heading_style = "font-size: 11px; font-weight: 700; color: #1a1a1a; background: transparent; border: none;"
         
-        label_width = schema.get("label_width", 280)
-        field_width = schema.get("field_width", 140)
+        label_width = schema.label_width
+        field_width = schema.field_width
 
         left_column = QVBoxLayout()
         left_column.setContentsMargins(0, 0, 0, 0)
@@ -102,43 +102,40 @@ class CustomLoadTab(QWidget):
         all_fields_layout.setContentsMargins(0, 0, 0, 0)
         all_fields_layout.setSpacing(10)
 
-        load_case_field = schema["fields"]["load_case"]
         load_case_row = QHBoxLayout()
         load_case_row.setSpacing(8)
-        
-        lbl = QLabel(load_case_field["label"])
+
+        lbl = QLabel(schema.load_case.label)
         lbl.setStyleSheet(label_style)
         lbl.setFixedWidth(label_width)
-        
+
         owner.custom_load_case_combo = QComboBox()
-        owner.custom_load_case_combo.addItems(schema["load_case_choices"])
+        owner.custom_load_case_combo.addItems(schema.load_case_choices)
         owner.custom_load_case_combo.setFixedWidth(field_width)
         apply_field_style(owner.custom_load_case_combo)
-        
+
         load_case_row.addWidget(lbl)
         load_case_row.addWidget(owner.custom_load_case_combo)
-        
-        custom_name_field = schema["fields"]["custom_load_case_name"]
+
         owner.custom_load_case_name_input = QLineEdit()
-        owner.custom_load_case_name_input.setPlaceholderText(custom_name_field["placeholder"])
+        owner.custom_load_case_name_input.setPlaceholderText(schema.custom_load_case_name.placeholder or "")
         owner.custom_load_case_name_input.setFixedWidth(field_width)
-        owner.custom_load_case_name_input.setEnabled(custom_name_field["enabled"])
+        owner.custom_load_case_name_input.setEnabled(schema.custom_load_case_name.enabled)
         apply_field_style(owner.custom_load_case_name_input)
         
         load_case_row.addWidget(owner.custom_load_case_name_input)
         load_case_row.addStretch()
         all_fields_layout.addLayout(load_case_row)
 
-        load_type_field = schema["fields"]["load_type"]
         load_type_row = QHBoxLayout()
         load_type_row.setSpacing(8)
-        
-        lbl = QLabel(load_type_field["label"])
+
+        lbl = QLabel(schema.load_type.label)
         lbl.setStyleSheet(label_style)
         lbl.setFixedWidth(label_width)
-        
+
         owner.custom_load_type_combo = QComboBox()
-        owner.custom_load_type_combo.addItems(schema["load_type_choices"])
+        owner.custom_load_type_combo.addItems(schema.load_type_choices)
         owner.custom_load_type_combo.setFixedWidth(field_width * 2 + 8)
         apply_field_style(owner.custom_load_type_combo)
         
@@ -162,36 +159,34 @@ class CustomLoadTab(QWidget):
         point_layout.setContentsMargins(0, 0, 0, 0)
         point_layout.setSpacing(10)
 
-        point_left_field = schema["fields"]["point_left"]
         point_left_row = QHBoxLayout()
         point_left_row.setSpacing(8)
-        
-        lbl = QLabel(point_left_field["label"])
+
+        lbl = QLabel(schema.point_left.label)
         lbl.setStyleSheet(label_style)
         lbl.setFixedWidth(label_width)
-        
+
         owner.custom_point_left_input = QLineEdit()
         owner.custom_point_left_input.setFixedWidth(field_width * 2 + 8)
         apply_field_style(owner.custom_point_left_input)
-        self._apply_validator(owner.custom_point_left_input, point_left_field.get("validator"))
-        
+        self._apply_validator(owner.custom_point_left_input, schema.point_left.validator)
+
         point_left_row.addWidget(lbl)
         point_left_row.addWidget(owner.custom_point_left_input)
         point_left_row.addStretch()
         point_layout.addLayout(point_left_row)
 
-        point_bearing_field = schema["fields"]["point_bearing"]
         point_bearing_row = QHBoxLayout()
         point_bearing_row.setSpacing(8)
-        
-        lbl = QLabel(point_bearing_field["label"])
+
+        lbl = QLabel(schema.point_bearing.label)
         lbl.setStyleSheet(label_style)
         lbl.setFixedWidth(label_width)
-        
+
         owner.custom_point_bearing_input = QLineEdit()
         owner.custom_point_bearing_input.setFixedWidth(field_width * 2 + 8)
         apply_field_style(owner.custom_point_bearing_input)
-        self._apply_validator(owner.custom_point_bearing_input, point_bearing_field.get("validator"))
+        self._apply_validator(owner.custom_point_bearing_input, schema.point_bearing.validator)
         
         point_bearing_row.addWidget(lbl)
         point_bearing_row.addWidget(owner.custom_point_bearing_input)
@@ -206,37 +201,34 @@ class CustomLoadTab(QWidget):
         line_layout.setContentsMargins(0, 0, 0, 0)
         line_layout.setSpacing(10)
 
-        line_left_start_field = schema["fields"]["line_left_start"]
-        line_left_end_field = schema["fields"]["line_left_end"]
-        
         left_edge_row = QHBoxLayout()
         left_edge_row.setSpacing(4)
-        
-        left_label = QLabel(line_left_start_field["label"])
+
+        left_label = QLabel(schema.line_left_start.label)
         left_label.setStyleSheet(label_style)
         left_label.setFixedWidth(label_width)
-        
+
         left_start_container = QVBoxLayout()
         left_start_container.setSpacing(4)
-        left_start_lbl = QLabel(line_left_start_field["sub_label"])
+        left_start_lbl = QLabel("Start")
         left_start_lbl.setStyleSheet("font-size: 9px; color: #505050;")
         left_start_lbl.setAlignment(Qt.AlignCenter)
         owner.custom_line_left_start = QLineEdit()
         owner.custom_line_left_start.setFixedWidth(field_width + 2)
         apply_field_style(owner.custom_line_left_start)
-        self._apply_validator(owner.custom_line_left_start, line_left_start_field.get("validator"))
+        self._apply_validator(owner.custom_line_left_start, schema.line_left_start.validator)
         left_start_container.addWidget(left_start_lbl)
         left_start_container.addWidget(owner.custom_line_left_start)
-        
+
         left_end_container = QVBoxLayout()
         left_end_container.setSpacing(4)
-        left_end_lbl = QLabel(line_left_end_field["sub_label"])
+        left_end_lbl = QLabel("End")
         left_end_lbl.setStyleSheet("font-size: 9px; color: #505050;")
         left_end_lbl.setAlignment(Qt.AlignCenter)
         owner.custom_line_left_end = QLineEdit()
         owner.custom_line_left_end.setFixedWidth(field_width + 2)
         apply_field_style(owner.custom_line_left_end)
-        self._apply_validator(owner.custom_line_left_end, line_left_end_field.get("validator"))
+        self._apply_validator(owner.custom_line_left_end, schema.line_left_end.validator)
         left_end_container.addWidget(left_end_lbl)
         left_end_container.addWidget(owner.custom_line_left_end)
         
@@ -246,37 +238,34 @@ class CustomLoadTab(QWidget):
         left_edge_row.addStretch()
         line_layout.addLayout(left_edge_row)
 
-        line_bearing_start_field = schema["fields"]["line_bearing_start"]
-        line_bearing_end_field = schema["fields"]["line_bearing_end"]
-        
         bearing_row = QHBoxLayout()
         bearing_row.setSpacing(4)
-        
-        bearing_label = QLabel(line_bearing_start_field["label"])
+
+        bearing_label = QLabel(schema.line_bearing_start.label)
         bearing_label.setStyleSheet(label_style)
         bearing_label.setFixedWidth(label_width)
-        
+
         bearing_start_container = QVBoxLayout()
         bearing_start_container.setSpacing(4)
-        bearing_start_lbl = QLabel(line_bearing_start_field["sub_label"])
+        bearing_start_lbl = QLabel("Start")
         bearing_start_lbl.setStyleSheet("font-size: 9px; color: #505050;")
         bearing_start_lbl.setAlignment(Qt.AlignCenter)
         owner.custom_line_bearing_start = QLineEdit()
         owner.custom_line_bearing_start.setFixedWidth(field_width + 2)
         apply_field_style(owner.custom_line_bearing_start)
-        self._apply_validator(owner.custom_line_bearing_start, line_bearing_start_field.get("validator"))
+        self._apply_validator(owner.custom_line_bearing_start, schema.line_bearing_start.validator)
         bearing_start_container.addWidget(bearing_start_lbl)
         bearing_start_container.addWidget(owner.custom_line_bearing_start)
-        
+
         bearing_end_container = QVBoxLayout()
         bearing_end_container.setSpacing(4)
-        bearing_end_lbl = QLabel(line_bearing_end_field["sub_label"])
+        bearing_end_lbl = QLabel("End")
         bearing_end_lbl.setStyleSheet("font-size: 9px; color: #505050;")
         bearing_end_lbl.setAlignment(Qt.AlignCenter)
         owner.custom_line_bearing_end = QLineEdit()
         owner.custom_line_bearing_end.setFixedWidth(field_width + 2)
         apply_field_style(owner.custom_line_bearing_end)
-        self._apply_validator(owner.custom_line_bearing_end, line_bearing_end_field.get("validator"))
+        self._apply_validator(owner.custom_line_bearing_end, schema.line_bearing_end.validator)
         bearing_end_container.addWidget(bearing_end_lbl)
         bearing_end_container.addWidget(owner.custom_line_bearing_end)
         
@@ -467,12 +456,12 @@ class CustomLoadTab(QWidget):
     def _apply_validator(self, widget, validator_config):
         if not validator_config:
             return
-        
-        if validator_config["type"] == "double_range":
+
+        if validator_config.type == "double_range":
             validator = QDoubleValidator(
-                validator_config["bottom"],
-                validator_config["top"],
-                validator_config.get("decimals", 2),
+                validator_config.bottom,
+                validator_config.top,
+                validator_config.decimals,
                 widget
             )
             validator.setNotation(QDoubleValidator.StandardNotation)

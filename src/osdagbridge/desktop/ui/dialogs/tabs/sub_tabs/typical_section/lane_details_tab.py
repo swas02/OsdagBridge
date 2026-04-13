@@ -24,29 +24,28 @@ class LaneDetailsTab(QWidget):
 
     def _create_field(self, field_def):
         owner = self.owner
-        ftype = field_def.get("type")
+        ftype = field_def.type
         if ftype == "combo":
             field = QComboBox()
-            field.addItems(field_def.get("choices") or [])
+            field.addItems(field_def.choices or ())
         else:
             return None
 
-        field.setObjectName(field_def.get("id", ""))
+        field.setObjectName(field_def.id)
         owner.style_input_field(field)
 
         # Make the lane count combo wider for readability
-        bind_name = field_def.get("bind")
-        if field_def.get("id") == "lane_count" or bind_name == "lane_count_combo":
+        bind_name = field_def.bind
+        if field_def.id == "lane_count" or bind_name == "lane_count_combo":
             try:
                 field.setFixedWidth(180)
             except Exception:
                 pass
 
-        bind_name = field_def.get("bind")
         if bind_name:
             setattr(owner, bind_name, field)
 
-        on_change = field_def.get("on_change")
+        on_change = getattr(field_def, "on_change", None)
         if on_change and hasattr(owner, on_change):
             field.currentTextChanged.connect(getattr(owner, on_change))
 
@@ -65,9 +64,9 @@ class LaneDetailsTab(QWidget):
         selector_layout.setContentsMargins(0, 0, 0, 0)
         selector_layout.setSpacing(12)
 
-        for row in LANE_DETAILS_TAB_SCHEMA.get("rows", []):
-            for field_def in row.get("fields", []):
-                label = QLabel(field_def.get("label", ""))
+        for row in LANE_DETAILS_TAB_SCHEMA.rows:
+            for field_def in row.fields:
+                label = QLabel(field_def.label)
                 label.setStyleSheet("font-size: 11px; color: #000;")
                 selector_layout.addWidget(label)
 
@@ -93,7 +92,7 @@ class LaneDetailsTab(QWidget):
         owner.lane_table.setAlternatingRowColors(True)
         owner.lane_table.setStyleSheet(
             """
-            QTableWidget { 
+            QTableWidget {
                 background-color: #ffffff;
                 alternate-background-color: #f9f9f9;
                 gridline-color: #e0e0e0;
@@ -128,4 +127,3 @@ class LaneDetailsTab(QWidget):
         lane_layout.addWidget(card)
         lane_layout.addStretch()
         # Note: Lane table population is handled by owner._initialize_lane_defaults()
-

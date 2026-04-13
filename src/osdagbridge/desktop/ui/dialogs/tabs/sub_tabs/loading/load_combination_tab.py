@@ -53,10 +53,10 @@ class LoadCombinationTab(QWidget):
         left_layout.setSpacing(16)
         
         # Build sections from schema
-        for section in schema.get("sections", []):
-            if section["type"] == "dynamic_checkbox_list":
+        for section in schema.sections:
+            if section.type == "dynamic_checkbox_list":
                 section_widget = self._build_dynamic_checkbox_section(section)
-            elif section["type"] == "custom_load_combo_table":
+            elif section.type == "custom_load_combo_table":
                 section_widget = self._build_custom_combo_section(section)
             else:
                 section_widget = owner._build_section(section, schema)
@@ -96,7 +96,7 @@ class LoadCombinationTab(QWidget):
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(10)
         
-        title = QLabel(section.get("title", ""))
+        title = QLabel(section.title)
         title.setStyleSheet("font-size: 11px; font-weight: bold; color: #2b2b2b; border: none;")
         layout.addWidget(title)
         
@@ -119,7 +119,7 @@ class LoadCombinationTab(QWidget):
         layout.setSpacing(10)
         
         header_row = QHBoxLayout()
-        self.custom_combo_title = QLabel(section_config.get("title", ""))
+        self.custom_combo_title = QLabel(section_config.title)
         self.custom_combo_title.setStyleSheet("font-size: 11px; font-weight: bold; color: #2b2b2b; border: none;")
         self.custom_combo_title.setVisible(bool(self.load_combo_items))
         header_row.addWidget(self.custom_combo_title)
@@ -132,7 +132,7 @@ class LoadCombinationTab(QWidget):
         )
         add_btn = QPushButton("Add Custom Combination")
         add_btn.setStyleSheet(button_style)
-        setattr(self.owner, section_config["add_button_bind"], add_btn)
+        setattr(self.owner, section_config.add_button_bind, add_btn)
         header_row.addWidget(add_btn)
         
         self.edit_btn = QPushButton("Modify")
@@ -201,7 +201,7 @@ class LoadCombinationTab(QWidget):
         self.load_combo_table.setAlternatingRowColors(False)
         
         layout.addWidget(self.load_combo_table)
-        setattr(self.owner, section_config["bind"], self.load_combo_table)
+        setattr(self.owner, section_config.bind, self.load_combo_table)
         
         return frame
 

@@ -63,7 +63,7 @@ class SupportConditionsTab(QWidget):
         main_layout.setSpacing(12)
 
         # create a separate card for each section defined in the schema
-        for section in SUPPORT_CONDITIONS_SCHEMA["sections"]:
+        for section in SUPPORT_CONDITIONS_SCHEMA.sections:
             card = QFrame()
             card.setObjectName("support_card")
             card.setStyleSheet("""

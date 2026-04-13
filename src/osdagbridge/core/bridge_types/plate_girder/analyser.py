@@ -1123,13 +1123,13 @@ class BridgeGrillageModel:
 
         ext_beam_nodes = model.get_element(member="exterior_main_beam_1", options="nodes")
 
-        max_def = max(results.displacements.sel(Loadcase=load_case_of_interest, Component="dy", Node=ext_beam_nodes[0]))
-        max_report_def = f"The maximum deflection = {max_def.values * 1000:.2f} mm"
+        # max_def = max(results.displacements.sel(Loadcase=load_case_of_interest, Component="dy", Node=ext_beam_nodes[0]))
+        # max_report_def = f"The maximum deflection = {max_def.values * 1000:.2f} mm"
 
         # Plot deflection
-        og.plot_defo(model, results, member="exterior_main_beam_1", option="nodes", loadcase=load_case_of_interest)
-        og.plt.title(max_report_def)
-        og.plt.show()
+        # og.plot_defo(model, results, member="exterior_main_beam_1", option="nodes", loadcase=load_case_of_interest)
+        # og.plt.title(max_report_def)
+        # og.plt.show()
 
         # load case specific results
         static_lc_result = model.get_results(load_case=['Deck slab load'])
@@ -1158,12 +1158,12 @@ class BridgeGrillageModel:
 
         # Plot BMD and SFD (change component as needed)
         load_case_of_interest = load_case_name
-        og.plot_force(model, results, member="exterior_main_beam_1", component="Mz", loadcase=load_case_of_interest)
+        og.plot_force(model, results, member="exterior_main_beam_1", component="Fy", loadcase=load_case_of_interest)
 
         max_report_bending = f"Maximum bending moment = {max_bending:.2f} kNm"
 
-        og.plt.title(max_report_bending)
-        og.plt.show()
+        # og.plt.title(max_report_bending)
+        # og.plt.show()
 
 
 # ============================================================

@@ -41,11 +41,11 @@ class DesignOptionsTab(QWidget):
 
     def reset_defaults(self):
         """Reset Design Options fields to schema defaults."""
-        for card in DESIGN_OPTIONS_SCHEMA.get("cards", []):
-            for section in card.get("sections", []):
-                for field in section.get("fields", []):
-                    bind_name = field.get("bind")
-                    default_value = field.get("default")
+        for card in DESIGN_OPTIONS_SCHEMA.cards:
+            for section in card.sections:
+                for field in section.fields:
+                    bind_name = getattr(field, "bind", None)
+                    default_value = getattr(field, "default", None)
 
                     if bind_name and default_value is not None and hasattr(self.parent_dialog, bind_name):
                         widget = getattr(self.parent_dialog, bind_name)
@@ -157,7 +157,7 @@ class DesignOptionsTab(QWidget):
 
        
         # Built Cards from Schema 
-        for card_schema in DESIGN_OPTIONS_SCHEMA.get("cards", []):
+        for card_schema in DESIGN_OPTIONS_SCHEMA.cards:
 
             card = QFrame()
             card.setStyleSheet(card_style)
@@ -166,7 +166,7 @@ class DesignOptionsTab(QWidget):
             card_layout.setContentsMargins(16, 14, 16, 14)
             card_layout.setSpacing(10)
 
-            card_title = card_schema.get("title")
+            card_title = card_schema.title
             if card_title:
                 title_lbl = QLabel(f"{card_title}")
                 title_lbl.setStyleSheet(heading_style)
@@ -175,10 +175,10 @@ class DesignOptionsTab(QWidget):
             # Reuse parent dialog schema renderer
             self.parent_dialog._build_sections_from_schema(
                 card_layout,
-                card_schema.get("sections", []),
+                card_schema.sections,
                 heading_style,
                 label_style,
-                card_schema.get("field_width", default_field_width),
+                card_schema.field_width,
             )
 
             main_layout.addWidget(card)

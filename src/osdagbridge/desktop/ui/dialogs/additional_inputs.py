@@ -150,6 +150,15 @@ class AdditionalInputs(QDialog):
             elif isinstance(widget, QCheckBox):
                 self.saved_values[widget_name] = widget.isChecked()
     
+    def get_saved_values(self):
+        """Return the dictionary of saved values."""
+        return self.saved_values.copy()
+
+    # compatibility helper used elsewhere in codebase
+    def get_all_values(self):
+        """Alias to get_saved_values for older callers."""
+        return self.get_saved_values()
+    
     def setupWrapper(self):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowSystemMenuHint)
 
@@ -288,18 +297,18 @@ class AdditionalInputs(QDialog):
                 continue
 
     def _create_schema_widget(self, field_def, field_width):
-        field_type = field_def.get("type")
+        field_type = field_def.type
         widget = None
 
         if field_type == "combo":
             widget = QComboBox()
-            choices = field_def.get("choices") or []
+            choices = field_def.choices or ()
 
             for choice in choices:
                 widget.addItem(choice)
 
             # apply enabled/disabled states if specified
-            enabled_list = field_def.get("enabled_choices")
+            enabled_list = field_def.enabled_choices
             if enabled_list is not None:
                 # after adding items we can disable the others
                 for idx in range(widget.count()):
@@ -311,7 +320,7 @@ class AdditionalInputs(QDialog):
                             # grey out the text
                             item.setForeground(Qt.gray)
 
-            default = field_def.get("default")
+            default = field_def.default
             if default:
                 widget.setCurrentText(str(default))
 
@@ -324,50 +333,51 @@ class AdditionalInputs(QDialog):
                 pass
 
         elif field_type == "checkbox":
-            widget = QCheckBox(field_def.get("label", ""))
-            widget.setChecked(bool(field_def.get("default", False)))
+            widget = QCheckBox(getattr(field_def, "label", ""))
+            widget.setChecked(bool(getattr(field_def, "default", False)))
 
         elif field_type == "label":
-            widget = QLabel(field_def.get("default", ""))
+            widget = QLabel(getattr(field_def, "default", ""))
             widget.setFixedWidth(field_width)
 
-        elif field_type in ["line", "number"]:
+        elif field_type in ("line", "number"):
             widget = QLineEdit()
 
-            default = field_def.get("default")
+            default = field_def.default
             if default is not None:
                 widget.setText(str(default))
                 widget.setProperty("default_value", default)
-            validator_def = field_def.get("validator")
+            validator_def = field_def.validator
 
             if validator_def:
-                if validator_def.get("type") == "double_range":
-                    bottom = validator_def.get("bottom", 0.0)
-                    top = validator_def.get("top", 1e9)
-                    decimals = validator_def.get("decimals", 2)
+                if validator_def.type == "double_range":
+                    bottom = validator_def.bottom
+                    top = validator_def.top
+                    decimals = validator_def.decimals
                     validator = QDoubleValidator(bottom, top, decimals)
                     widget.setValidator(validator)
                     # placeholder showing range
                     widget.setPlaceholderText(f"{bottom} - {top}")
 
-                elif validator_def.get("type") == "int_range":
-                    bottom = validator_def.get("bottom", 0)
-                    top = validator_def.get("top", 1_000_000)
+                elif validator_def.type == "int_range":
+                    bottom = validator_def.bottom
+                    top = validator_def.top
                     validator = QIntValidator(bottom, top)
                     widget.setValidator(validator)
                     widget.setPlaceholderText(f"{bottom} - {top}")
 
             widget.setFixedWidth(field_width)
 
-        if field_type not in ["checkbox", "label"]:
+        if field_type not in ("checkbox", "label"):
             apply_field_style(widget)
 
-        bind_name = field_def.get("bind")
+        bind_name = getattr(field_def, "bind", None)
         if bind_name:
             setattr(self, bind_name, widget)
 
-        if field_def.get("id"):
-            widget.setObjectName(field_def["id"])
+        field_id = getattr(field_def, "id", None)
+        if field_id:
+            widget.setObjectName(field_id)
 
         return widget
 
@@ -566,16 +576,16 @@ class AdditionalInputs(QDialog):
 
     def _build_sections_from_schema(self, parent_layout, sections, heading_style, label_style, field_width):
         for section in sections:
-            title = section.get("title")
-            section_field_width = section.get("field_width", field_width)
+            title = getattr(section, "title", None)
+            section_field_width = getattr(section, "field_width", None) or field_width
 
-            checkbox_groups = section.get("checkbox_groups")
+            checkbox_groups = getattr(section, "checkbox_groups", ())
             if checkbox_groups:
                 groups_layout = QHBoxLayout()
                 groups_layout.setSpacing(20)
 
                 for group in checkbox_groups:
-                    box = QGroupBox(group.get("title", ""))
+                    box = QGroupBox(group.title)
                     box.setStyleSheet(
                         "QGroupBox { border: 1px solid #b0b0b0; border-radius: 6px; margin-top: 12px; padding: 8px; background: #ffffff; }"
                         "QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 12px; padding: 0 6px; background: #f5f5f5; font-weight: 600; font-size: 11px; color: #333333; }"
@@ -584,17 +594,16 @@ class AdditionalInputs(QDialog):
                     vbox.setContentsMargins(16, 24, 16, 16)
                     vbox.setSpacing(12)
                     checkboxes = []
-                    default_checked = group.get("default_checked", False)
+                    default_checked = group.default_checked
 
-                    for text in group.get("items", []):
+                    for text in group.items:
                         cb = QCheckBox(text)
                         cb.setChecked(default_checked)
                         cb.setStyleSheet("QCheckBox { font-size: 11px; color: #333333; background: transparent; spacing: 8px; }")
                         vbox.addWidget(cb)
                         checkboxes.append(cb)
-                        
 
-                    bind_name = group.get("bind")
+                    bind_name = group.bind
                     if bind_name:
                         setattr(self, bind_name, checkboxes)
 
@@ -620,28 +629,28 @@ class AdditionalInputs(QDialog):
             grid.setColumnMinimumWidth(0, 120)
 
             row_index = 0
-            for field_def in section.get("fields", []):
-                row_fields = field_def.get("row_fields")
+            for field_def in getattr(section, "fields", ()):
+                row_fields = getattr(field_def, "row_fields", None)
                 if row_fields:
                     row_layout = QHBoxLayout()
                     row_layout.setSpacing(8)  # reduce gap
                     row_layout.setContentsMargins(0, 0, 0, 0)
 
-                    for i, inline_def in enumerate(row_fields):
+                    for inline_def in row_fields:
 
-                        if inline_def.get("type") == "label":
-                            lbl = QLabel(inline_def.get("label", ""))
+                        if inline_def.type == "label":
+                            lbl = QLabel(inline_def.label)
                             lbl.setStyleSheet(label_style)
                             row_layout.addWidget(lbl)
 
                             # Add extra spacing only after "Limit :"
-                            if inline_def.get("after_spacing"):
-                                row_layout.addSpacing(inline_def["after_spacing"])
+                            if inline_def.after_spacing:
+                                row_layout.addSpacing(inline_def.after_spacing)
 
                         else:
                             widget = self._create_schema_widget(
                                 inline_def,
-                                inline_def.get("width", section_field_width)
+                                getattr(inline_def, "width", None) or section_field_width,
                             )
                             row_layout.addWidget(widget)
 
@@ -649,14 +658,14 @@ class AdditionalInputs(QDialog):
                     parent_layout.addLayout(row_layout)
                     continue
 
-                field_type = field_def.get("type")
+                field_type = field_def.type
                 if field_type == "checkbox":
                     widget = self._create_schema_widget(field_def, section_field_width)
                     grid.addWidget(widget, row_index, 0, 1, 2, Qt.AlignLeft)
                     row_index += 1
                     continue
 
-                lbl = QLabel(field_def.get("label", ""))
+                lbl = QLabel(getattr(field_def, "label", ""))
                 lbl.setTextFormat(Qt.RichText)
                 lbl.setStyleSheet(label_style)
                 grid.addWidget(lbl, row_index, 0, Qt.AlignLeft | Qt.AlignVCenter)

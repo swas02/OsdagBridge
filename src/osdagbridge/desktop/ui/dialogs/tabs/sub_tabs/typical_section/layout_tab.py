@@ -1,5 +1,4 @@
 """Layout sub-tab for Typical Section Details (schema-driven)."""
-import copy
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QLabel, QLineEdit, QSizePolicy
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QDoubleValidator, QIntValidator
@@ -18,52 +17,45 @@ class LayoutTab(QWidget):
         self.setStyleSheet("background-color: white;")
         self._build_ui()
 
-    def _create_field(self, field_def, default_width=180):
+    def _create_field(self, field_def, default_width=180, override_default=None):
         owner = self.owner
-        ftype = field_def.get("type")
         field = QLineEdit()
 
-        validator_def = field_def.get("validator")
+        validator_def = field_def.validator
         if validator_def:
-            vtype = validator_def.get("type")
-            if vtype == "double_range":
-                bottom = validator_def.get("bottom", 0.0)
-                top = validator_def.get("top", 1e9)
-                decimals = validator_def.get("decimals", 3)
-                field.setValidator(QDoubleValidator(bottom, top, decimals))
-            elif vtype == "int_range":
-                bottom = validator_def.get("bottom", 0)
-                top = validator_def.get("top", 1e9)
-                field.setValidator(QIntValidator(bottom, top))
+            if validator_def.type == "double_range":
+                field.setValidator(QDoubleValidator(validator_def.bottom, validator_def.top, validator_def.decimals))
+            elif validator_def.type == "int_range":
+                field.setValidator(QIntValidator(validator_def.bottom, validator_def.top))
 
-        default = field_def.get("default")
+        default = override_default if override_default is not None else field_def.default
         if default is not None:
             field.setText(str(default))
 
-        if field_def.get("read_only"):
+        if field_def.read_only:
             field.setReadOnly(True)
 
         apply_field_style(field)
         field.setFixedWidth(default_width)
-        field.setObjectName(field_def.get("id", ""))
+        field.setObjectName(field_def.id)
 
         # Make read-only displays visually disabled without breaking styling
-        if field_def.get("id") == "overall_bridge_width_display":
+        if field_def.id == "overall_bridge_width_display":
             field.setEnabled(False)
             field.setStyleSheet(
                 "QLineEdit { background-color: #f2f2f2; color: #666;"
                 " border: 1px solid #c0c0c0; border-radius: 4px; padding: 4px 6px; }"
             )
 
-        bind_name = field_def.get("bind")
+        bind_name = field_def.bind
         if bind_name:
             setattr(owner, bind_name, field)
 
-        on_text_changed = field_def.get("on_text_changed")
+        on_text_changed = field_def.on_text_changed
         if on_text_changed and hasattr(owner, on_text_changed):
             field.textChanged.connect(getattr(owner, on_text_changed))
 
-        on_editing_finished = field_def.get("on_editing_finished")
+        on_editing_finished = field_def.on_editing_finished
         if on_editing_finished and hasattr(owner, on_editing_finished):
             field.editingFinished.connect(getattr(owner, on_editing_finished))
 
@@ -94,11 +86,8 @@ class LayoutTab(QWidget):
             lbl.setMinimumWidth(180)
             return lbl
 
-        schema_rows = copy.deepcopy(LAYOUT_TAB_SCHEMA.get("rows", []))
-        for row in schema_rows:
-            for field_def in row.get("fields", []):
-                if field_def.get("id") == "deck_overhang" and field_def.get("default") is None:
-                    field_def["default"] = f"{0.35 * DEFAULT_GIRDER_SPACING:.3f}"
+        schema_rows = LAYOUT_TAB_SCHEMA.rows
+        _deck_overhang_default = f"{0.35 * DEFAULT_GIRDER_SPACING:.3f}"
 
         # Create adjustment notice label (shown when values are auto-adjusted)
         owner.layout_adjust_notice = QLabel()
@@ -109,7 +98,7 @@ class LayoutTab(QWidget):
         owner.layout_adjust_notice.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         owner.layout_adjust_notice.setFixedWidth(180)
         owner.layout_adjust_notice.hide()
-        
+
         # Create warning notice label (shown when overhang exceeds spacing)
         owner.layout_warning_notice = QLabel()
         owner.layout_warning_notice.setStyleSheet(
@@ -134,17 +123,22 @@ class LayoutTab(QWidget):
         row_idx = 0
         for row_num, row in enumerate(schema_rows):
             col = 0
-            for field_def in row.get("fields", []):
-                lbl = _label(field_def.get("label", ""))
+            for field_def in row.fields:
+                lbl = _label(field_def.label)
                 grid.addWidget(lbl, row_idx, col, Qt.AlignLeft)
                 col += 1
 
-                field = self._create_field(field_def, default_width=180)
+                override = (
+                    _deck_overhang_default
+                    if field_def.id == "deck_overhang" and field_def.default is None
+                    else None
+                )
+                field = self._create_field(field_def, default_width=180, override_default=override)
                 grid.addWidget(field, row_idx, col)
                 col += 1
 
                 # Special tooltip for overall width
-                if field_def.get("id") == "overall_bridge_width_display":
+                if field_def.id == "overall_bridge_width_display":
                     field.setToolTip(owner.overall_bridge_width_formula)
 
             row_idx += 1
@@ -156,4 +150,3 @@ class LayoutTab(QWidget):
         layout_layout.addLayout(grid)
 
         layout_layout.addStretch()
-

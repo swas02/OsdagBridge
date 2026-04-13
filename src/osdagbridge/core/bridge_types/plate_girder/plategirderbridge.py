@@ -3,15 +3,8 @@ import sqlite3
 from pathlib import Path
 from .ui_fields import FrontendData
 from .dto import ConcreteProperties, DeckLayoutProperties, GrillageGeometry, SectionProperties, SteelProperties, MaterialProperties, ConcreteProperties
-from .defaults import (
-    DEFAULTS_DICT,
-    DEFAULT_SPAN_M,
-    DEFAULT_CARRIAGEWAY_WIDTH_M,
-    DEFAULT_NO_OF_GIRDERS,
-    DEFAULT_GIRDER_SYMMETRY,
-    DEFAULT_MEDIAN_WIDTH_M,
-)
-from .initial_sizing import BridgeConfigurationSolver, DEFAULT_FOOTPATH_WIDTH
+from .defaults import DEFAULTS_DICT
+from .initial_sizing import BridgeConfigurationSolver
 from .analyser import BridgeGrillageModel
 from .analysis_results import PlateGirderAnalysisResults
 from .plot_generator import (
@@ -46,13 +39,16 @@ from osdagbridge.core.utils.common import (
 # Default median width (m) used when user enables median but no additional-input
 # width has been supplied yet.
 _DEFAULT_MEDIAN_WIDTH_M = 1.2
+DEFAULT_NO_OF_GIRDERS = 6
+DEFAULT_GIRDER_SYMMETRY = "Girder Symmetric"
+DEFAULT_FOOTPATH_WIDTH = 1.5  # m (IRC 5 Clause 104.3.6 minimum)
 
 _DB_PATH = Path(__file__).resolve().parents[2] / "data" / "ResourceFiles" / "Intg_osdag.sqlite"
 
 # Steel constants (same values used in analyser.py __main__)
 _STEEL_E0       = 200 * GPa    # Initial elastic modulus (Pa)
 _STEEL_B        = 0.01         # Strain-hardening ratio
-_STEEL_FY_DEFAULT = 250 * MPa  # Fallback Fy if material not found in DB (Pa)
+# _STEEL_FY_DEFAULT = 250 * MPa  # Fallback Fy if material not found in DB (Pa)
 
 
 class PlateGirderBridge:
@@ -136,6 +132,9 @@ class PlateGirderBridge:
           6. Apply live loads
         """
         parsed = self._parse_basic_inputs()
+        is_valid, missing_fields = self.check_basic_inputs()
+        if not is_valid:
+            raise ValueError(f"Missing required inputs: {', '.join(missing_fields)}")
         self._solve_bridge_layout(parsed)
         self._build_dtos(parsed)
         self.setup_grillage()
@@ -154,9 +153,9 @@ class PlateGirderBridge:
 
     def _parse_basic_inputs(self) -> dict:
         """Extract and normalise scalar values from ``self.basic_inputs``."""
-        span       = self._to_float(KEY_SPAN,             DEFAULT_SPAN_M)
-        cw_width   = self._to_float(KEY_CARRIAGEWAY_WIDTH, DEFAULT_CARRIAGEWAY_WIDTH_M)
-        skew_angle = self._to_float(KEY_SKEW_ANGLE,        0.0)
+        span       = float(self.basic_inputs[KEY_SPAN])
+        cw_width   = float(self.basic_inputs[KEY_CARRIAGEWAY_WIDTH])
+        skew_angle = float(self.basic_inputs[KEY_SKEW_ANGLE])
 
         include_median = str(self.basic_inputs.get(KEY_INCLUDE_MEDIAN, "No")).strip()
         footpath_str   = str(self.basic_inputs.get(KEY_FOOTPATH,       "None")).strip()
@@ -189,6 +188,31 @@ class PlateGirderBridge:
             railing_width=railing_width,
             median_width=median_width,
         )
+
+    def check_basic_inputs(self) -> tuple[bool, list[str]]:
+        """Check whether the mandatory basic inputs have been filled.
+
+        Returns
+        -------
+        (is_valid, missing_fields) : tuple[bool, list[str]]
+            ``is_valid`` is ``True`` when all required fields are present and
+            non-empty.  ``missing_fields`` lists the display names of any
+            fields that are absent or empty.
+        """
+        required = {
+            KEY_SPAN:              "Span",
+            KEY_CARRIAGEWAY_WIDTH: "Carriageway Width",
+            KEY_SKEW_ANGLE:        "Skew Angle",
+            KEY_PROJECT_LOCATION:  "Project Location",
+        }
+
+        missing: list[str] = []
+        for key, label in required.items():
+            value = self.basic_inputs.get(key)
+            if value is None or str(value).strip() in ("", "None"):
+                missing.append(label)
+
+        return (len(missing) == 0, missing)
 
     def _solve_bridge_layout(self, parsed: dict) -> None:
         """Run BridgeConfigurationSolver and store sizing + section results."""
@@ -225,16 +249,11 @@ class PlateGirderBridge:
         # n_t: transverse grid lines — approx one division every 2 × girder spacings
         n_t = max(3, int(round(span / (DEFAULT_GIRDER_SPACING * 2))))
 
-        deck_overhang = self.sizing_result.deck_overhang
-        # When there is an overhang, the two edge beams add 2 extra longitudinal
-        # grid lines on top of the structural girder count.
-        n_l = self.sizing_result.no_of_girders + (2 if deck_overhang > 0 else 0)
-
         self.grillage_geometry = GrillageGeometry(
             L=span,
-            n_l=n_l,
+            n_l=self.sizing_result.no_of_girders,
             n_t=n_t,
-            edge_dist=deck_overhang,
+            edge_dist=self.sizing_result.deck_overhang,
             ext_to_int_dist=self.sizing_result.girder_spacing,
             angle=parsed["skew_angle"],
         )

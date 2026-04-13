@@ -26,9 +26,9 @@ class SeismicLoadTab(QWidget):
         owner = self.owner
         schema = self.schema
 
-        LABEL_MIN_WIDTH = schema.get("label_width", 220)
-        FIELD_WIDTH = schema.get("field_width", 180)
-        FIELD_HEIGHT = schema.get("field_height", 28)
+        LABEL_MIN_WIDTH = schema.label_width
+        FIELD_WIDTH = schema.field_width
+        FIELD_HEIGHT = schema.field_height
 
         self.setStyleSheet("background-color: #f5f5f5;")
      
@@ -65,10 +65,10 @@ class SeismicLoadTab(QWidget):
 
         label_style = "font-size: 11px; font-weight: 600; color: #3a3a3a; background: transparent; border: none;"
 
-        for section in schema.get("sections", []):
-            section_type = section.get("type")
-            section_id = section.get("id")
-         
+        for section in schema.sections:
+            section_type = section.type
+            section_id = section.id
+
             if section_type == "input_group" and section_id == "seismic_inputs_section":
                 seismic_inputs_box = QFrame()
                 seismic_inputs_box.setStyleSheet("""
@@ -83,87 +83,87 @@ class SeismicLoadTab(QWidget):
                 seismic_inputs_box_layout.setContentsMargins(12, 12, 12, 12)
                 seismic_inputs_box_layout.setSpacing(14)
 
-                seismic_title = QLabel(section.get("title", ""))
+                seismic_title = QLabel(section.title)
                 seismic_title.setStyleSheet("font-size: 12px; font-weight: 700; color: #3a3a3a; background: transparent; border: none;")
                 seismic_inputs_box_layout.addWidget(seismic_title)
 
-                for field in section.get("fields", []):
-                    field_type = field.get("type")
-                    
+                for field in section.fields:
+                    field_type = field.type
+
                     row_layout = QHBoxLayout()
                     row_layout.setSpacing(10)
-                    
-                    lbl = QLabel(field.get("label", ""))
+
+                    lbl = QLabel(field.label)
                     lbl.setStyleSheet(label_style)
                     lbl.setMinimumWidth(LABEL_MIN_WIDTH)
                     row_layout.addWidget(lbl)
-    
+
                     if field_type == "combo":
                         widget = QComboBox()
-                        widget.addItems(field.get("choices", []))
-                        if field.get("default"):
-                            widget.setCurrentText(field.get("default"))
+                        widget.addItems(field.choices or ())
+                        if field.default:
+                            widget.setCurrentText(field.default)
                         widget.setFixedSize(FIELD_WIDTH, FIELD_HEIGHT)
                         apply_field_style(widget)
-                        
-                        bind_name = field.get("bind")
+
+                        bind_name = field.bind
                         if bind_name:
                             setattr(self, bind_name, widget)
 
                         # Seismic zone combo (if configured as combo) is derived from project location output.
                         row_layout.addWidget(widget)
-                    
+
                     elif field_type == "line":
                         widget = QLineEdit()
-                        if field.get("default"):
-                            widget.setText(field.get("default"))
+                        if field.default:
+                            widget.setText(field.default)
                         widget.setFixedSize(FIELD_WIDTH, FIELD_HEIGHT)
                         apply_field_style(widget)
-                        
-                        bind_name = field.get("bind")
+
+                        bind_name = field.bind
                         if bind_name:
                             setattr(self, bind_name, widget)
 
-                        if field.get("id") == "seismic_zone":
+                        if field.id == "seismic_zone":
                             widget.setReadOnly(True)
                             widget.setToolTip("Auto-filled from software output (project location seismic zone)")
-                            
-                        if not field.get("enabled", True):
+
+                        if not field.enabled:
                             widget.setEnabled(False)
-                        
+
                         row_layout.addWidget(widget)
-                    
+
                     elif field_type == "mode_line":
                         mode_combo = QComboBox()
-                        mode_combo.addItems(field.get("mode_choices", []))
-                        if field.get("default_mode"):
-                            mode_combo.setCurrentText(field.get("default_mode"))
+                        mode_combo.addItems(field.mode_choices)
+                        if field.default_mode:
+                            mode_combo.setCurrentText(field.default_mode)
                         mode_combo.setFixedSize(FIELD_WIDTH, FIELD_HEIGHT)
                         apply_field_style(mode_combo)
-                        
-                        mode_bind = field.get("bind_mode")
+
+                        mode_bind = field.bind_mode
                         if mode_bind:
                             setattr(self, mode_bind, mode_combo)
-                        
+
                         row_layout.addWidget(mode_combo)
-                        
+
                         value_input = QLineEdit()
-                        value_input.setPlaceholderText(field.get("placeholder", ""))
+                        value_input.setPlaceholderText(field.placeholder or "")
                         value_input.setFixedSize(FIELD_WIDTH, FIELD_HEIGHT)
                         value_input.setEnabled(False)
                         apply_field_style(value_input)
-                        
-                        value_bind = field.get("bind_value")
+
+                        value_bind = field.bind_value
                         if value_bind:
                             setattr(self, value_bind, value_input)
-                        
+
                         row_layout.addWidget(value_input)
-                    
+
                     row_layout.addStretch()
                     seismic_inputs_box_layout.addLayout(row_layout)
 
                 left_layout.addWidget(seismic_inputs_box)
-         
+
             elif section_type == "computed_group" and section_id == "computed_values_section":
                 computed_box = QFrame()
                 computed_box.setStyleSheet("""
@@ -178,20 +178,20 @@ class SeismicLoadTab(QWidget):
                 computed_box_layout.setContentsMargins(12, 12, 12, 12)
                 computed_box_layout.setSpacing(14)
 
-                computed_title = QLabel(section.get("title", ""))
+                computed_title = QLabel(section.title)
                 computed_title.setStyleSheet("font-size: 11px; font-weight: 700; color: #3a3a3a; background: transparent; border: none;")
                 computed_box_layout.addWidget(computed_title)
 
                 self.seismic_computed_fields = {}
-                
-                for field in section.get("fields", []):
+
+                for field in section.fields:
                     row_layout = QHBoxLayout()
                     row_layout.setSpacing(10)
-                    
-                    lbl = QLabel(field.get("label", ""))
+
+                    lbl = QLabel(field.label)
                     lbl.setStyleSheet(label_style)
                     lbl.setMinimumWidth(LABEL_MIN_WIDTH)
-                    
+
                     computed_field = QLineEdit()
                     computed_field.setFixedSize(FIELD_WIDTH, FIELD_HEIGHT)
                     computed_field.setReadOnly(True)
@@ -205,15 +205,15 @@ class SeismicLoadTab(QWidget):
                             font-size: 11px;
                         }
                     """)
-                    
-                    bind_name = field.get("bind")
+
+                    bind_name = field.bind
                     if bind_name:
                         self.seismic_computed_fields[bind_name] = computed_field
-                    
+
                     row_layout.addWidget(lbl)
                     row_layout.addWidget(computed_field)
                     row_layout.addStretch()
-                    
+
                     computed_box_layout.addLayout(row_layout)
 
                 left_layout.addWidget(computed_box)
@@ -229,13 +229,13 @@ class SeismicLoadTab(QWidget):
         right_layout.setContentsMargins(16, 16, 16, 16)
         right_layout.setSpacing(10)
 
-        description = schema.get("description", {})
-        desc_title = QLabel(description.get("title", ""))
+        description = schema.description
+        desc_title = QLabel(description.title if description else "")
         desc_title.setAlignment(Qt.AlignCenter)
         desc_title.setStyleSheet("font-size: 12px; font-weight: 700; color: #000000; background: transparent; border: none;")
         right_layout.addWidget(desc_title)
 
-        desc_text = QLabel(description.get("text", ""))
+        desc_text = QLabel(description.text if description else "")
         desc_text.setWordWrap(True)
         desc_text.setStyleSheet("font-size: 11px; color: #4b4b4b; background: transparent; border: none;")
         right_layout.addWidget(desc_text)
@@ -250,15 +250,15 @@ class SeismicLoadTab(QWidget):
         main_layout.addWidget(scroll_area)
 
         seismic_inputs = next(
-            (s for s in schema.get("sections", []) if s.get("id") == "seismic_inputs_section"),
+            (s for s in schema.sections if s.id == "seismic_inputs_section"),
             None
         )
-        
+
         if seismic_inputs:
-            for field in seismic_inputs.get("fields", []):
-                on_mode_change = field.get("on_mode_change")
+            for field in seismic_inputs.fields:
+                on_mode_change = getattr(field, "on_mode_change", None)
                 if on_mode_change:
-                    mode_bind = field.get("bind_mode")
+                    mode_bind = getattr(field, "bind_mode", None)
                     if mode_bind and hasattr(self, mode_bind):
                         combo = getattr(self, mode_bind)
                         combo.currentTextChanged.connect(lambda _: self._toggle_seismic_custom_inputs())
@@ -276,21 +276,21 @@ class SeismicLoadTab(QWidget):
     def _apply_seismic_defaults(self):
         """Apply default values from schema"""
         seismic_inputs = next(
-            (s for s in self.schema.get("sections", []) if s.get("id") == "seismic_inputs_section"),
+            (s for s in self.schema.sections if s.id == "seismic_inputs_section"),
             None
         )
-        
+
         if not seismic_inputs:
             return
-        
-        for field in seismic_inputs.get("fields", []):
-            bind_name = field.get("bind") or field.get("bind_mode")
+
+        for field in seismic_inputs.fields:
+            bind_name = getattr(field, "bind", None) or getattr(field, "bind_mode", None)
             if not bind_name or not hasattr(self, bind_name):
                 continue
-            
+
             widget = getattr(self, bind_name)
-            default_value = field.get("default") or field.get("default_mode")
-            
+            default_value = getattr(field, "default", None) or getattr(field, "default_mode", None)
+
             if default_value:
                 if isinstance(widget, QComboBox):
                     widget.setCurrentText(default_value)

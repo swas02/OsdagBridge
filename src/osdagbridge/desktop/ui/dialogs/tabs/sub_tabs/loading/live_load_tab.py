@@ -38,9 +38,9 @@ class LiveLoadTab(QWidget):
         owner = self.owner
         schema = self.schema
         
-        LABEL_MIN_WIDTH = schema.get("label_width", 220)
-        FIELD_WIDTH = schema.get("field_width", 180)
-        FIELD_HEIGHT = schema.get("field_height", 28)
+        LABEL_MIN_WIDTH = schema.label_width
+        FIELD_WIDTH = schema.field_width
+        FIELD_HEIGHT = schema.field_height
         
         self.setStyleSheet("background-color: #f5f5f5;")
         main_layout = QVBoxLayout(self)
@@ -81,26 +81,26 @@ class LiveLoadTab(QWidget):
 
         label_style = "font-size: 11px; font-weight: 600; color: #3a3a3a; background: transparent; border: none;"
 
-        for section in schema.get("sections", []):
-            section_type = section.get("type")
-            
+        for section in schema.sections:
+            section_type = section.type
+
             # IRC VEHICLES SECTION
-            if section_type == "checkbox_list" and section.get("id") == "irc_vehicles_section":
+            if section_type == "checkbox_list" and section.id == "irc_vehicles_section":
                 irc_box = QFrame()
                 irc_box.setStyleSheet("QFrame { border: 1px solid #9c9c9c; border-radius: 6px; background-color: #ffffff; padding: 0px; }")
                 irc_box_layout = QVBoxLayout(irc_box)
                 irc_box_layout.setContentsMargins(12, 12, 12, 12)
                 irc_box_layout.setSpacing(8)
 
-                irc_title = QLabel(section.get("title", ""))
+                irc_title = QLabel(section.title)
                 irc_title.setStyleSheet("font-size: 11px; font-weight: 700; color: #3a3a3a; background: transparent; border: none;")
                 irc_box_layout.addWidget(irc_title)
 
                 owner.irc_vehicle_checkboxes = []
                 owner.irc_vehicle_labels = []
-                default_checked = section.get("default_checked", False)
-                
-                for vehicle in section.get("items", []):
+                default_checked = section.default_checked
+
+                for vehicle in section.items:
                     row = QHBoxLayout()
                     row.setSpacing(10)
                     label = QLabel(vehicle)
@@ -117,9 +117,9 @@ class LiveLoadTab(QWidget):
                     owner.irc_vehicle_labels.append(label)
 
                 left_layout.addWidget(irc_box)
-            
+
             # CUSTOM VEHICLE SECTION
-            elif section_type == "custom_vehicle_table" and section.get("id") == "custom_vehicle_section":
+            elif section_type == "custom_vehicle_table" and section.id == "custom_vehicle_section":
                 self.custom_vehicle_box = QFrame()
                 self.custom_vehicle_box.setStyleSheet("QFrame { border: 1px solid #9c9c9c; border-radius: 6px; background-color: #ffffff; padding: 0px; }")
                 custom_box_layout = QVBoxLayout(self.custom_vehicle_box)
@@ -129,24 +129,24 @@ class LiveLoadTab(QWidget):
                 header_row = QHBoxLayout()
                 header_row.setContentsMargins(0, 0, 0, 0)
                 header_row.setSpacing(10)
-                
-                self.custom_vehicle_header_label = QLabel(section.get("title", ""))
+
+                self.custom_vehicle_header_label = QLabel(section.title)
                 self.custom_vehicle_header_label.setStyleSheet("font-size: 11px; font-weight: 700; color: #3a3a3a; background: transparent; border: none;")
                 self.custom_vehicle_header_label.setMinimumWidth(LABEL_MIN_WIDTH)
                 header_row.addWidget(self.custom_vehicle_header_label)
-                
-                add_button_bind = section.get("add_button_bind")
+
+                add_button_bind = section.add_button_bind
                 if add_button_bind:
                     setattr(owner, add_button_bind, QPushButton("Add Custom Vehicle"))
                     add_button = getattr(owner, add_button_bind)
                     add_button.setStyleSheet("QPushButton { background-color: white; border: 1px solid #3a3a3a; border-radius: 3px; font-size: 10px; font-weight: 600; color: #3a3a3a; padding: 3px 8px; } QPushButton:hover { background-color: #f8f8f8; }")
                     add_button.setFixedHeight(FIELD_HEIGHT)
                     header_row.addWidget(add_button)
-                
+
                 header_row.addStretch()
                 custom_box_layout.addLayout(header_row)
-                
-                table_bind = section.get("bind")
+
+                table_bind = section.bind
                 if table_bind:
                     setattr(self, table_bind, QTableWidget(0, 4))
                     self.custom_vehicle_table = getattr(self, table_bind)
@@ -185,12 +185,12 @@ class LiveLoadTab(QWidget):
         self.remaining_box_layout.setContentsMargins(12, 12, 12, 12)
         self.remaining_box_layout.setSpacing(8)
 
-        braking_section = next((s for s in schema.get("sections", []) if s.get("id") == "braking_section"), None)
+        braking_section = next((s for s in schema.sections if s.id == "braking_section"), None)
         if braking_section:
-            self.braking_section_label = QLabel(braking_section.get("title", ""))
+            self.braking_section_label = QLabel(braking_section.title)
             self.braking_section_label.setStyleSheet("font-size: 11px; font-weight: 700; color: #3a3a3a; background: transparent; border: none;")
             self.remaining_box_layout.addWidget(self.braking_section_label)
-            
+
             self.braking_checkboxes_container = QWidget()
             self.braking_checkboxes_layout = QVBoxLayout(self.braking_checkboxes_container)
             self.braking_checkboxes_layout.setContentsMargins(0, 0, 0, 0)
@@ -198,22 +198,22 @@ class LiveLoadTab(QWidget):
             self.remaining_box_layout.addWidget(self.braking_checkboxes_container)
             self._update_braking_vehicles_section()
 
-        ecc_section = next((s for s in schema.get("sections", []) if s.get("id") == "eccentricity"), None)
+        ecc_section = next((s for s in schema.sections if s.id == "eccentricity"), None)
         if ecc_section:
             ecc_row = QHBoxLayout()
             ecc_row.setSpacing(10)
-            ecc_label = QLabel(ecc_section.get("label", ""))
+            ecc_label = QLabel(ecc_section.label)
             ecc_label.setStyleSheet(label_style)
             ecc_label.setMinimumWidth(LABEL_MIN_WIDTH)
-            
-            bind_name = ecc_section.get("bind")
+
+            bind_name = ecc_section.bind
             if bind_name:
                 setattr(owner, bind_name, QLineEdit())
                 ecc_input = getattr(owner, bind_name)
                 ecc_input.setFixedSize(FIELD_WIDTH, FIELD_HEIGHT)
-                ecc_input.setText(ecc_section.get("default", ""))
+                ecc_input.setText(ecc_section.default or "")
                 apply_field_style(ecc_input)
-                
+
             ecc_row.addWidget(ecc_label)
             ecc_row.addWidget(ecc_input)
             ecc_row.addStretch()
@@ -221,7 +221,7 @@ class LiveLoadTab(QWidget):
 
         left_layout.addWidget(remaining_box)
 
-        footpath_section = next((s for s in schema.get("sections", []) if s.get("id") == "footpath_pressure"), None)
+        footpath_section = next((s for s in schema.sections if s.id == "footpath_pressure"), None)
         if footpath_section:
             footpath_box = QFrame()
             footpath_box.setStyleSheet("QFrame { border: 1px solid #9c9c9c; border-radius: 6px; background-color: #ffffff; padding: 0px; }")
@@ -231,25 +231,25 @@ class LiveLoadTab(QWidget):
 
             footpath_row = QHBoxLayout()
             footpath_row.setSpacing(10)
-            footpath_label = QLabel(footpath_section.get("label", ""))
+            footpath_label = QLabel(footpath_section.label)
             footpath_label.setStyleSheet(label_style)
             footpath_label.setMinimumWidth(LABEL_MIN_WIDTH)
 
-            mode_bind = footpath_section.get("bind_mode")
+            mode_bind = footpath_section.bind_mode
             if mode_bind:
                 setattr(owner, mode_bind, QComboBox())
                 mode_combo = getattr(owner, mode_bind)
-                mode_combo.addItems(footpath_section.get("mode_choices", []))
-                mode_combo.setCurrentText(footpath_section.get("default_mode", ""))
-                mode_combo.setFixedSize(footpath_section.get("mode_width", 120), FIELD_HEIGHT)
+                mode_combo.addItems(footpath_section.mode_choices)
+                mode_combo.setCurrentText(footpath_section.default_mode or "")
+                mode_combo.setFixedSize(footpath_section.mode_width or 120, FIELD_HEIGHT)
                 apply_field_style(mode_combo)
 
-            value_bind = footpath_section.get("bind_value")
+            value_bind = footpath_section.bind_value
             if value_bind:
                 setattr(owner, value_bind, QLineEdit())
                 value_input = getattr(owner, value_bind)
-                value_input.setFixedSize(footpath_section.get("value_width", 80), FIELD_HEIGHT)
-                value_input.setText(footpath_section.get("default_value", ""))
+                value_input.setFixedSize(footpath_section.value_width or 80, FIELD_HEIGHT)
+                value_input.setText(footpath_section.default_value or "")
                 apply_field_style(value_input)
 
             footpath_row.addWidget(footpath_label)
@@ -269,13 +269,13 @@ class LiveLoadTab(QWidget):
         right_layout.setContentsMargins(16, 16, 16, 16)
         right_layout.setSpacing(10)
 
-        description = schema.get("description", {})
-        desc_label = QLabel(description.get("title", ""))
+        description = schema.description
+        desc_label = QLabel(description.title if description else "")
         desc_label.setAlignment(Qt.AlignCenter)
         desc_label.setStyleSheet("font-size: 12px; font-weight: 700; color: #000000; background: transparent; border: none;")
         right_layout.addWidget(desc_label)
 
-        description_label = QLabel(description.get("text", ""))
+        description_label = QLabel(description.text if description else "")
         description_label.setWordWrap(True)
         description_label.setStyleSheet("font-size: 11px; color: #4b4b4b; background: transparent; border: none;")
         right_layout.addWidget(description_label)
@@ -291,9 +291,9 @@ class LiveLoadTab(QWidget):
         owner.custom_vehicle_add_button.clicked.connect(self.show_custom_vehicle_dialog)
         self._update_custom_vehicle_header()
         
-        footpath_section = next((s for s in schema.get("sections", []) if s.get("id") == "footpath_pressure"), None)
+        footpath_section = next((s for s in schema.sections if s.id == "footpath_pressure"), None)
         if footpath_section:
-            on_mode_change = footpath_section.get("on_mode_change")
+            on_mode_change = footpath_section.on_mode_change
             if on_mode_change and hasattr(owner, on_mode_change):
                 owner.footpath_mode_combo.currentTextChanged.connect(getattr(owner, on_mode_change))
                 getattr(owner, on_mode_change)(owner.footpath_mode_combo.currentText())
@@ -310,19 +310,19 @@ class LiveLoadTab(QWidget):
                     if sub_item.widget():
                         sub_item.widget().deleteLater()
         
-        irc_section = next((s for s in self.schema.get("sections", []) if s.get("id") == "irc_vehicles_section"), None)
-        irc_vehicles = irc_section.get("items", []) if irc_section else []
+        irc_section = next((s for s in self.schema.sections if s.id == "irc_vehicles_section"), None)
+        irc_vehicles = irc_section.items if irc_section else ()
         irc_braking_vehicles = [v for v in irc_vehicles if v == "Class SV"]
         custom_vehicle_names = list(self.custom_vehicles.keys()) if self.has_real_custom_vehicle else []
         all_braking_vehicles = irc_braking_vehicles + custom_vehicle_names
-        
+
         self.owner.braking_vehicle_checkboxes = []
         self.owner.braking_vehicle_labels = []
         label_style = "font-size: 11px; font-weight: 600; color: #3a3a3a; background: transparent; border: none;"
-        LABEL_MIN_WIDTH = self.schema.get("label_width", 220)
-        FIELD_HEIGHT = self.schema.get("field_height", 28)
-        braking_section = next((s for s in self.schema.get("sections", []) if s.get("id") == "braking_section"), None)
-        default_checked = braking_section.get("default_checked", True) if braking_section else True
+        LABEL_MIN_WIDTH = self.schema.label_width
+        FIELD_HEIGHT = self.schema.field_height
+        braking_section = next((s for s in self.schema.sections if s.id == "braking_section"), None)
+        default_checked = braking_section.default_checked if braking_section else True
         
         for vehicle in all_braking_vehicles:
             row = QHBoxLayout()
@@ -366,7 +366,7 @@ class LiveLoadTab(QWidget):
         self.custom_vehicles[name] = vehicle_data
         row = self.custom_vehicle_table.rowCount()
         self.custom_vehicle_table.insertRow(row)
-        FIELD_HEIGHT = self.schema.get("field_height", 28)
+        FIELD_HEIGHT = self.schema.field_height
 
         name_item = QTableWidgetItem(name)
         name_item.setTextAlignment(Qt.AlignVCenter | Qt.AlignLeft)
@@ -478,20 +478,20 @@ class LiveLoadTab(QWidget):
 
     def reset_defaults(self):
         """Reset Live Load inputs to schema default values"""
-        irc_section = next((s for s in self.schema.get("sections", []) if s.get("id") == "irc_vehicles_section"), None)
+        irc_section = next((s for s in self.schema.sections if s.id == "irc_vehicles_section"), None)
         if irc_section:
-            default_checked = irc_section.get("default_checked", True)
+            default_checked = irc_section.default_checked
             for checkbox in self.owner.irc_vehicle_checkboxes:
                 checkbox.setChecked(default_checked)
 
-        ecc_section = next((s for s in self.schema.get("sections", []) if s.get("id") == "eccentricity"), None)
+        ecc_section = next((s for s in self.schema.sections if s.id == "eccentricity"), None)
         if ecc_section:
-            self.owner.eccentricity_input.setText(ecc_section.get("default", ""))
+            self.owner.eccentricity_input.setText(ecc_section.default or "")
 
-        footpath_section = next((s for s in self.schema.get("sections", []) if s.get("id") == "footpath_pressure"), None)
+        footpath_section = next((s for s in self.schema.sections if s.id == "footpath_pressure"), None)
         if footpath_section:
-            self.owner.footpath_mode_combo.setCurrentText(footpath_section.get("default_mode", ""))
-            self.owner.footpath_value_input.setText(footpath_section.get("default_value", ""))
+            self.owner.footpath_mode_combo.setCurrentText(footpath_section.default_mode or "")
+            self.owner.footpath_value_input.setText(footpath_section.default_value or "")
             self.owner.footpath_value_input.setDisabled(True)
 
         self.custom_vehicle_table.setRowCount(0)
@@ -501,10 +501,10 @@ class LiveLoadTab(QWidget):
         self._update_custom_vehicle_box_height()
         self._update_braking_vehicles_section()
         self._update_custom_vehicle_header()
-        
-        braking_section = next((s for s in self.schema.get("sections", []) if s.get("id") == "braking_section"), None)
+
+        braking_section = next((s for s in self.schema.sections if s.id == "braking_section"), None)
         if braking_section:
-            default_checked = braking_section.get("default_checked", True)
+            default_checked = braking_section.default_checked
             for checkbox in self.owner.braking_vehicle_checkboxes:
                 checkbox.setChecked(default_checked)
 
@@ -533,7 +533,7 @@ class LiveLoadTab(QWidget):
     def _update_custom_vehicle_box_height(self):
         """Update the custom vehicle box height based on content"""
         rows = self.custom_vehicle_table.rowCount()
-        FIELD_HEIGHT = self.schema.get("field_height", 28)
+        FIELD_HEIGHT = self.schema.field_height
         base_height = FIELD_HEIGHT + 24 + 8
         
         if rows == 0:

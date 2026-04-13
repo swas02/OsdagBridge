@@ -44,9 +44,9 @@ class PermanentLoadTab(QWidget):
         left_layout.setSpacing(12)
 
         schema = PERMANENT_LOAD_TAB_SCHEMA
-        label_width = schema.get("label_width", LABEL_MIN_WIDTH)
+        label_width = schema.label_width
 
-        for section in schema.get("sections", []):
+        for section in schema.sections:
             section_box = self._create_section_box(section, label_width)
             left_layout.addWidget(section_box)
 
@@ -63,14 +63,14 @@ class PermanentLoadTab(QWidget):
         right_layout.setContentsMargins(16, 16, 16, 16)
         right_layout.setSpacing(10)
 
-        description = schema.get("description", {})
-        
-        desc_title = QLabel(description.get("title", "Description Box"))
+        description = schema.description
+
+        desc_title = QLabel(description.title if description else "Description Box")
         desc_title.setAlignment(Qt.AlignCenter)
         desc_title.setStyleSheet("font-size: 12px; font-weight: 700; color: #000000; background: transparent; border: none;")
         right_layout.addWidget(desc_title)
 
-        desc_text = QLabel(description.get("text", ""))
+        desc_text = QLabel(description.text if description else "")
         desc_text.setWordWrap(True)
         desc_text.setStyleSheet("font-size: 11px; color: #4b4b4b; background: transparent; border: none;")
         right_layout.addWidget(desc_text)
@@ -96,18 +96,18 @@ class PermanentLoadTab(QWidget):
         section_box_layout.setContentsMargins(12, 12, 12, 12)
         section_box_layout.setSpacing(14)
 
-        if "title" in section:
-            title_label = QLabel(section["title"])
+        if section.title:
+            title_label = QLabel(section.title)
             title_label.setStyleSheet("font-size: 11px; font-weight: 700; color: #3a3a3a; background: transparent; border: none;")
             section_box_layout.addWidget(title_label)
 
         label_style = "font-size: 11px; font-weight: 600; color: #3a3a3a; background: transparent; border: none;"
-        
-        for field_def in section.get("fields", []):
+
+        for field_def in section.fields:
             row = QHBoxLayout()
             row.setSpacing(10)
 
-            label = QLabel(field_def["label"])
+            label = QLabel(field_def.label)
             label.setStyleSheet(label_style)
             label.setMinimumWidth(label_width)
             row.addWidget(label)
@@ -123,34 +123,34 @@ class PermanentLoadTab(QWidget):
 
     def _create_field_widget(self, field_def):
         """Create widget from field definition and bind it"""
-        field_type = field_def.get("type")
-        bind_name = field_def.get("bind")
+        field_type = field_def.type
+        bind_name = field_def.bind
 
         if field_type == "combo":
-            widget = self.owner._create_yes_no_combo() if field_def.get("choices") == ["Yes", "No"] else QComboBox()
-            
-            if field_def.get("choices") != ["Yes", "No"]:
-                choices = field_def.get("choices", [])
+            choices = field_def.choices or ()
+            widget = self.owner._create_yes_no_combo() if choices == ("Yes", "No") else QComboBox()
+
+            if choices != ("Yes", "No"):
                 widget.addItems(choices)
-            
-            default = field_def.get("default")
+
+            default = field_def.default
             if default:
                 widget.setCurrentText(default)
-                
+
         elif field_type == "line":
             widget = self.owner._create_line_edit()
-        
-            default = field_def.get("default")
+
+            default = field_def.default
             if default:
                 widget.setText(default)
-            
-            validator_def = field_def.get("validator")
-            if validator_def and validator_def.get("type") == "double_range":
+
+            validator_def = field_def.validator
+            if validator_def and validator_def.type == "double_range":
                 validator = QDoubleValidator(
-                    validator_def.get("bottom", 0.0),
-                    validator_def.get("top", 999999.0),
-                    validator_def.get("decimals", 2),
-                    widget
+                    validator_def.bottom,
+                    validator_def.top,
+                    validator_def.decimals,
+                    widget,
                 )
                 validator.setLocale(QLocale(QLocale.English, QLocale.UnitedStates))
                 validator.setNotation(QDoubleValidator.StandardNotation)
@@ -166,15 +166,15 @@ class PermanentLoadTab(QWidget):
     def reset_defaults(self):
         """Reset Permanent Load inputs to default values"""
         schema = PERMANENT_LOAD_TAB_SCHEMA
-        
-        for section in schema.get("sections", []):
-            for field_def in section.get("fields", []):
-                bind_name = field_def.get("bind")
-                default = field_def.get("default")
-                
+
+        for section in schema.sections:
+            for field_def in section.fields:
+                bind_name = field_def.bind
+                default = field_def.default
+
                 if bind_name and default and hasattr(self, bind_name):
                     widget = getattr(self, bind_name)
-                    
+
                     if isinstance(widget, QComboBox):
                         widget.setCurrentText(default)
                     elif isinstance(widget, QLineEdit):

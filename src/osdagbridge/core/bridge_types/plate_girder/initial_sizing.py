@@ -22,7 +22,6 @@ from osdagbridge.core.bridge_types.plate_girder.bridge_geometry import (
 # Default values per IRC 5 and RDSO standard practice
 DEFAULT_DECK_OVERHANG_RATIO = 0.5  # overhang = spacing / 2 (i.e., 0.5 * spacing)
 DEFAULT_DECK_THICKNESS = 200  # mm (RDSO composite-girder drawings: 200-250mm)
-DEFAULT_FOOTPATH_WIDTH = 1.5  # m (IRC 5 Clause 104.3.6 minimum)
 
 # Optimization bounds
 MIN_GIRDER_SPACING = 1.0  # m (IRC:24 - not less than 1/20 of span for main girders)

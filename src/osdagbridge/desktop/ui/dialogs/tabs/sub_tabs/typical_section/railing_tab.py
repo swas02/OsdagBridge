@@ -17,47 +17,43 @@ class RailingTab(QWidget):
 
     def _create_field(self, field_def, field_width=200):
         owner = self.owner
-        ftype = field_def.get("type")
+        ftype = field_def.type
 
         if ftype == "combo":
             field = QComboBox()
-            field.addItems(field_def.get("choices") or [])
+            field.addItems(field_def.choices or ())
         else:
             field = QLineEdit()
-            validator_def = field_def.get("validator")
+            validator_def = field_def.validator
             if validator_def:
-                vtype = validator_def.get("type")
-                if vtype == "double_range":
-                    bottom = validator_def.get("bottom", 0.0)
-                    top = validator_def.get("top", 1e9)
-                    decimals = validator_def.get("decimals", 3)
-                    field.setValidator(QDoubleValidator(bottom, top, decimals))
-            default = field_def.get("default")
+                if validator_def.type == "double_range":
+                    field.setValidator(QDoubleValidator(validator_def.bottom, validator_def.top, validator_def.decimals))
+            default = field_def.default
             if default is not None:
                 field.setText(str(default))
-            placeholder = field_def.get("placeholder")
+            placeholder = field_def.placeholder
             if placeholder:
                 field.setPlaceholderText(placeholder)
-            if field_def.get("enabled") is False:
+            if not field_def.enabled:
                 field.setEnabled(False)
 
-        field.setObjectName(field_def.get("id", ""))
+        field.setObjectName(field_def.id)
         field.setFixedWidth(field_width)
         owner.style_input_field(field)
 
-        bind_name = field_def.get("bind")
+        bind_name = field_def.bind
         if bind_name:
             setattr(owner, bind_name, field)
 
-        on_change = field_def.get("on_change")
+        on_change = getattr(field_def, "on_change", None)
         if on_change and hasattr(owner, on_change) and ftype == "combo":
             field.currentTextChanged.connect(getattr(owner, on_change))
 
-        on_text_changed = field_def.get("on_text_changed")
+        on_text_changed = getattr(field_def, "on_text_changed", None)
         if on_text_changed and hasattr(owner, on_text_changed) and ftype != "combo":
             field.textChanged.connect(getattr(owner, on_text_changed))
 
-        on_editing_finished = field_def.get("on_editing_finished")
+        on_editing_finished = getattr(field_def, "on_editing_finished", None)
         if on_editing_finished and hasattr(owner, on_editing_finished) and ftype != "combo":
             field.editingFinished.connect(getattr(owner, on_editing_finished))
 
@@ -77,13 +73,13 @@ class RailingTab(QWidget):
         grid.setVerticalSpacing(10)
         grid.setColumnStretch(1, 1)
 
-        label_width = RAILING_TAB_SCHEMA.get("label_width", 180)
+        label_width = RAILING_TAB_SCHEMA.label_width
 
         row_idx = 0
-        for row in RAILING_TAB_SCHEMA.get("rows", []):
+        for row in RAILING_TAB_SCHEMA.rows:
             col = 0
-            for field_def in row.get("fields", []):
-                label = QLabel(field_def.get("label", ""))
+            for field_def in row.fields:
+                label = QLabel(field_def.label)
                 label.setStyleSheet("font-size: 11px; color: #000;")
                 label.setMinimumWidth(label_width)
                 grid.addWidget(label, row_idx, col, Qt.AlignLeft)
@@ -97,4 +93,3 @@ class RailingTab(QWidget):
         card_layout.addLayout(grid)
         railing_layout.addWidget(card)
         railing_layout.addStretch()
-

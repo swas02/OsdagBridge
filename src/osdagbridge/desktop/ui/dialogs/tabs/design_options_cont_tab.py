@@ -63,12 +63,12 @@ class DesignOptionsContTab(QWidget):
 
     def reset_defaults(self):
         """Reset Design Options (Cont.) fields to schema defaults."""
-        for section in DESIGN_OPTIONS_CONT_SCHEMA.get("sections", []):
+        for section in DESIGN_OPTIONS_CONT_SCHEMA.sections:
 
             # normal fields
-            for field in section.get("fields", []):
-                bind_name = field.get("bind")
-                default_value = field.get("default")
+            for field in section.fields:
+                bind_name = getattr(field, "bind", None)
+                default_value = getattr(field, "default", None)
 
                 if bind_name and default_value is not None and hasattr(self.parent_dialog, bind_name):
                     widget = getattr(self.parent_dialog, bind_name)
@@ -81,9 +81,9 @@ class DesignOptionsContTab(QWidget):
                         widget.setCurrentText(str(default_value))
 
             # checkbox groups
-            for group in section.get("checkbox_groups", []):
-                bind_name = group.get("bind")
-                default_checked = group.get("default_checked", False)
+            for group in section.checkbox_groups:
+                bind_name = group.bind
+                default_checked = group.default_checked
 
                 if bind_name and hasattr(self.parent_dialog, bind_name):
                     checkboxes = getattr(self.parent_dialog, bind_name)
@@ -166,12 +166,12 @@ class DesignOptionsContTab(QWidget):
 
         field_width = 150
 
-        for section in DESIGN_OPTIONS_CONT_SCHEMA.get("sections", []):
+        for section in DESIGN_OPTIONS_CONT_SCHEMA.sections:
 
             # -------- LIMIT STATES (Checkbox Groups) --------
-            if section.get("checkbox_groups"):
+            if section.checkbox_groups:
 
-                title_lbl = QLabel(section.get("title", ""))
+                title_lbl = QLabel(section.title)
                 title_lbl.setStyleSheet("""
                     font-size: 12px;
                     font-weight: 700;
@@ -183,8 +183,8 @@ class DesignOptionsContTab(QWidget):
                 groups_layout = QHBoxLayout()
                 groups_layout.setSpacing(20)
 
-                for group in section.get("checkbox_groups", []):
-                    box = QGroupBox(group.get("title", ""))
+                for group in section.checkbox_groups:
+                    box = QGroupBox(group.title)
                     box.setStyleSheet("""
                         QGroupBox {
                             border: 1px solid #000000;
@@ -210,7 +210,7 @@ class DesignOptionsContTab(QWidget):
                     vbox.setSpacing(8)
 
                     checkboxes = []
-                    for text in group.get("items", []):
+                    for text in group.items:
                         cb = QCheckBox(text)
                         cb.setStyleSheet("""
                             QCheckBox {
@@ -221,9 +221,9 @@ class DesignOptionsContTab(QWidget):
                         """)
                         vbox.addWidget(cb)
                         checkboxes.append(cb)
-                    vbox.addStretch()  
+                    vbox.addStretch()
                     # bind to parent dialog
-                    setattr(self.parent_dialog, group.get("bind"), checkboxes)
+                    setattr(self.parent_dialog, group.bind, checkboxes)
 
                     groups_layout.addWidget(box)
 

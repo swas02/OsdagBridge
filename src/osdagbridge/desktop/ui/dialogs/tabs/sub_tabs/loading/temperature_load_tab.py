@@ -37,8 +37,8 @@ class TemperatureLoadTab(QWidget):
 
         label_style = "font-size: 11px; color: #3a3a3a; background: transparent; border: none;"
         heading_style = "font-size: 12px; font-weight: 700; color: #2b2b2b; background: transparent; border: none;"
-        field_width = schema.get("field_width", 140)
-        label_width = schema.get("label_width", 240)
+        field_width = schema.field_width
+        label_width = schema.label_width
 
         readonly_input_style = """
         QLineEdit {
@@ -50,7 +50,7 @@ class TemperatureLoadTab(QWidget):
         }
         """
 
-        for section in schema.get("sections", []):
+        for section in schema.sections:
             section_box = QFrame()
             section_box.setStyleSheet(
                 "QFrame { border: 1px solid #b2b2b2; border-radius: 8px; background-color: #ffffff; }"
@@ -59,7 +59,7 @@ class TemperatureLoadTab(QWidget):
             section_layout.setContentsMargins(12, 12, 12, 12)
             section_layout.setSpacing(10)
 
-            section_title = QLabel(section.get("title", ""))
+            section_title = QLabel(section.title)
             section_title.setStyleSheet(heading_style)
             section_layout.addWidget(section_title)
 
@@ -70,8 +70,8 @@ class TemperatureLoadTab(QWidget):
             grid.setColumnMinimumWidth(0, label_width)
 
             row = 0
-            for field in section.get("fields", []):
-                lbl = QLabel(field.get("label", ""))
+            for field in section.fields:
+                lbl = QLabel(field.label)
                 lbl.setStyleSheet(label_style)
                 grid.addWidget(lbl, row, 0, Qt.AlignLeft | Qt.AlignVCenter)
 
@@ -79,42 +79,42 @@ class TemperatureLoadTab(QWidget):
                 input_widget.setFixedWidth(field_width)
                 apply_field_style(input_widget)
 
-                if "placeholder" in field:
-                    input_widget.setPlaceholderText(field["placeholder"])
+                if field.placeholder:
+                    input_widget.setPlaceholderText(field.placeholder)
 
-                if "default" in field:
-                    input_widget.setText(field["default"])
+                if field.default:
+                    input_widget.setText(field.default)
 
-                if "validator" in field:
-                    validator_config = field["validator"]
-                    if validator_config["type"] == "double_range":
+                validator_config = field.validator
+                if validator_config:
+                    if validator_config.type == "double_range":
                         validator = QDoubleValidator(
-                            validator_config["bottom"],
-                            validator_config["top"],
-                            validator_config.get("decimals", 2),
+                            validator_config.bottom,
+                            validator_config.top,
+                            validator_config.decimals,
                             input_widget
                         )
-                        if validator_config.get("notation") == "scientific":
+                        if validator_config.notation == "scientific":
                             validator.setNotation(QDoubleValidator.ScientificNotation)
                         else:
                             validator.setNotation(QDoubleValidator.StandardNotation)
                         input_widget.setValidator(validator)
-                    elif validator_config["type"] == "int_range":
+                    elif validator_config.type == "int_range":
                         validator = QIntValidator(
-                            validator_config["bottom"],
-                            validator_config["top"],
+                            validator_config.bottom,
+                            validator_config.top,
                             input_widget
                         )
                         input_widget.setValidator(validator)
 
-                if field.get("read_only", False):
+                if field.read_only:
                     input_widget.setReadOnly(True)
                     input_widget.setStyleSheet(readonly_input_style)
-                
-                if not field.get("enabled", True):
+
+                if not field.enabled:
                     input_widget.setEnabled(False)
 
-                bind_name = field.get("bind")
+                bind_name = field.bind
                 if bind_name:
                     setattr(owner, bind_name, input_widget)
 
@@ -136,8 +136,8 @@ class TemperatureLoadTab(QWidget):
         right_layout.setContentsMargins(16, 16, 16, 16)
         right_layout.setSpacing(10)
 
-        description = schema.get("description", {})
-        desc_title = QLabel(description.get("title", "Description Box"))
+        description = schema.description
+        desc_title = QLabel(description.title if description else "Description Box")
         desc_title.setAlignment(Qt.AlignCenter)
         desc_title.setStyleSheet(
             "font-size: 12px; font-weight: 700; color: #2b2b2b; background: transparent; border: none;"

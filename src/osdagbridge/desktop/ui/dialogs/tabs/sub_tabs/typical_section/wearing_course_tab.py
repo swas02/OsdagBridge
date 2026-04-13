@@ -17,39 +17,35 @@ class WearingCourseTab(QWidget):
 
     def _create_field(self, field_def, field_width=200):
         owner = self.owner
-        ftype = field_def.get("type")
+        ftype = field_def.type
 
         if ftype == "combo":
             field = QComboBox()
-            field.addItems(field_def.get("choices") or [])
+            field.addItems(field_def.choices or ())
         else:
             field = QLineEdit()
-            validator_def = field_def.get("validator")
+            validator_def = field_def.validator
             if validator_def:
-                vtype = validator_def.get("type")
-                if vtype == "double_range":
-                    bottom = validator_def.get("bottom", 0.0)
-                    top = validator_def.get("top", 1e9)
-                    decimals = validator_def.get("decimals", 3)
-                    field.setValidator(QDoubleValidator(bottom, top, decimals))
+                if validator_def.type == "double_range":
+                    field.setValidator(QDoubleValidator(validator_def.bottom, validator_def.top, validator_def.decimals))
 
-            default = field_def.get("default")
+            default = field_def.default
             if default is not None:
                 field.setText(str(default))
 
-        field.setObjectName(field_def.get("id", ""))
+        field.setObjectName(field_def.id)
         field.setFixedWidth(field_width)
         owner.style_input_field(field)
 
-        bind_name = field_def.get("bind")
+        bind_name = field_def.bind
         if bind_name:
             setattr(owner, bind_name, field)
 
-        on_change = field_def.get("on_change")
+        on_change = getattr(field_def, "on_change", None)
         if on_change and hasattr(owner, on_change) and ftype == "combo":
             field.currentTextChanged.connect(getattr(owner, on_change))
 
-        on_editing_finished = field_def.get("on_editing_finished")
+        on_editing_finished = getattr(field_def, "on_editing_finished", None)
         if on_editing_finished and hasattr(owner, on_editing_finished) and ftype != "combo":
             field.editingFinished.connect(getattr(owner, on_editing_finished))
 
@@ -71,13 +67,13 @@ class WearingCourseTab(QWidget):
         grid.setColumnStretch(1, 0)
         grid.setColumnStretch(2, 1)  # filler stretch to keep fields left
 
-        label_width = WEARING_COURSE_TAB_SCHEMA.get("label_width", 200)
+        label_width = WEARING_COURSE_TAB_SCHEMA.label_width
 
         row_idx = 0
-        for row in WEARING_COURSE_TAB_SCHEMA.get("rows", []):
+        for row in WEARING_COURSE_TAB_SCHEMA.rows:
             col = 0
-            for field_def in row.get("fields", []):
-                label = QLabel(field_def.get("label", ""))
+            for field_def in row.fields:
+                label = QLabel(field_def.label)
                 label.setStyleSheet("font-size: 11px; color: #000;")
                 label.setMinimumWidth(label_width)
                 grid.addWidget(label, row_idx, col, Qt.AlignLeft)
@@ -91,4 +87,3 @@ class WearingCourseTab(QWidget):
         card_layout.addLayout(grid)
         wearing_layout.addWidget(card)
         wearing_layout.addStretch()
-

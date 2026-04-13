@@ -17,11 +17,11 @@ class CrashBarrierTab(QWidget):
 
     def _create_field(self, field_def, field_width=260):
         owner = self.owner
-        ftype = field_def.get("type")
+        ftype = field_def.type
 
         if ftype == "combo":
             field = QComboBox()
-            choices = field_def.get("choices") or []
+            choices = field_def.choices or ()
             field.addItems(choices)
             # Ensure long IRC 5 labels are fully visible
             field.setSizeAdjustPolicy(QComboBox.AdjustToContents)
@@ -30,36 +30,32 @@ class CrashBarrierTab(QWidget):
             field.view().setMinimumWidth(320)
         else:
             field = QLineEdit()
-            validator_def = field_def.get("validator")
+            validator_def = field_def.validator
             if validator_def:
-                vtype = validator_def.get("type")
-                if vtype == "double_range":
-                    bottom = validator_def.get("bottom", 0.0)
-                    top = validator_def.get("top", 1e9)
-                    decimals = validator_def.get("decimals", 3)
-                    field.setValidator(QDoubleValidator(bottom, top, decimals))
+                if validator_def.type == "double_range":
+                    field.setValidator(QDoubleValidator(validator_def.bottom, validator_def.top, validator_def.decimals))
 
-            default = field_def.get("default")
+            default = field_def.default
             if default is not None:
                 field.setText(str(default))
 
-        field.setObjectName(field_def.get("id", ""))
+        field.setObjectName(field_def.id)
         field.setFixedWidth(field_width)
         owner.style_input_field(field)
 
-        bind_name = field_def.get("bind")
+        bind_name = field_def.bind
         if bind_name:
             setattr(owner, bind_name, field)
 
-        on_change = field_def.get("on_change")
+        on_change = getattr(field_def, "on_change", None)
         if on_change and hasattr(owner, on_change) and ftype == "combo":
             field.currentTextChanged.connect(getattr(owner, on_change))
 
-        on_text_changed = field_def.get("on_text_changed")
+        on_text_changed = getattr(field_def, "on_text_changed", None)
         if on_text_changed and hasattr(owner, on_text_changed) and ftype != "combo":
             field.textChanged.connect(getattr(owner, on_text_changed))
 
-        on_editing_finished = field_def.get("on_editing_finished")
+        on_editing_finished = getattr(field_def, "on_editing_finished", None)
         if on_editing_finished and hasattr(owner, on_editing_finished) and ftype != "combo":
             field.editingFinished.connect(getattr(owner, on_editing_finished))
 
@@ -82,20 +78,20 @@ class CrashBarrierTab(QWidget):
         grid.setColumnStretch(1, 0)
         grid.setColumnStretch(2, 1)  # filler to keep fields near labels
 
-        label_width = CRASH_BARRIER_TAB_SCHEMA.get("label_width", 200)
+        label_width = CRASH_BARRIER_TAB_SCHEMA.label_width
 
         row_idx = 0
-        for row in CRASH_BARRIER_TAB_SCHEMA.get("rows", []):
+        for row in CRASH_BARRIER_TAB_SCHEMA.rows:
             col = 0
-            for field_def in row.get("fields", []):
-                label = QLabel(field_def.get("label", ""))
+            for field_def in row.fields:
+                label = QLabel(field_def.label)
                 label.setStyleSheet("font-size: 11px; color: #000;")
                 label.setMinimumWidth(label_width)
                 grid.addWidget(label, row_idx, col, Qt.AlignLeft)
                 col += 1
 
                 # Preserve label handles used by visibility logic
-                fid = field_def.get("id")
+                fid = field_def.id
                 if fid == "crash_barrier_density":
                     self.owner.crash_barrier_density_label = label
                 if fid == "crash_barrier_area":
@@ -111,4 +107,3 @@ class CrashBarrierTab(QWidget):
         card_layout.addLayout(grid)
         crash_layout.addWidget(card)
         crash_layout.addStretch()
-
